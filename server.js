@@ -20,9 +20,44 @@ app.use((req, res, next) => {
   next();
 });
 
-const userState = [];
+const userState = [
+  {
+    "id": "cf6a64aa-ff6a-4580-8e9f-40e44e339d58",
+    "name": "Alexa",
+    "host": false,
+    "message": "loremlcasckeasklvshevbseklvbsekv",
+    "created": "1994-12-17T04:24:00"
+  },
+  {
+    "id": "cf6a64aa-ff6a-4580-8e9f-40e44e339d58",
+    "name": "Alexa",
+    "host": false,
+    "message": "loremlcasckeasklvshevbseklvbsekv",
+    "created": "1994-12-17T04:24:00"
+  },
+  {
+    "id": "cf6a64as-ff6a-4580-8e9f-40e44e339d58",
+    "name": "Ben",
+    "host": false,
+    "message": "female awd",
+    "created": "1995-12-17T03:44:00"
+  },
+  {
+    "id": "cf6a64as-ff6a-4580-8e9f-40e44e339d59",
+    "name": "Benny",
+    "host": false,
+    "message": "female aASDAWDAWDWDAWDAWDwd",
+    "created": "1996-12-17T03:44:00"
+  },
+  {
+    "id": "cf6a64as-ff6a-4580-8e9f-s0e44e339d59",
+    "name": "mike",
+    "host": false,
+    "message": "femalasdwwwwwwwwwwwwwwe aASDAWDAWDWDAWDAWDwd",
+    "created": "1996-12-17T03:44:00"
+  }
+];
 app.post("/new-user", async (request, response) => {
-  console.log("cac");
   if (Object.keys(request.body).length === 0) {
     const result = {
       status: "error",
@@ -31,13 +66,16 @@ app.post("/new-user", async (request, response) => {
     response.status(400).send(JSON.stringify(result)).end();
   }
   const { name } = request.body;
+
   const isExist = userState.find((user) => user.name === name);
   if (!isExist) {
     const newUser = {
       id: crypto.randomUUID(),
       name: name,
+      host: true,
     };
     userState.push(newUser);
+
     const result = {
       status: "ok",
       user: newUser,
@@ -49,19 +87,24 @@ app.post("/new-user", async (request, response) => {
       message: "This name is already taken!",
     };
     response.status(409).send(JSON.stringify(result)).end();
+
   }
 });
 
 const server = http.createServer(app);
 const wsServer = new WebSocketServer({ server });
 wsServer.on("connection", (ws) => {
+
   ws.on("message", (msg, isBinary) => {
+
     const receivedMSG = JSON.parse(msg);
-    console.dir(receivedMSG);
+
     if (receivedMSG.type === "exit") {
+
       const idx = userState.findIndex(
-        (user) => user.name === receivedMSG.user.name
+        (user) => user.name === receivedMSG.name
       );
+
       userState.splice(idx, 1);
       [...wsServer.clients]
         .filter((o) => o.readyState === WebSocket.OPEN)
@@ -69,11 +112,15 @@ wsServer.on("connection", (ws) => {
       return;
     }
     if (receivedMSG.type === "send") {
+
+
       [...wsServer.clients]
         .filter((o) => o.readyState === WebSocket.OPEN)
         .forEach((o) => o.send(msg, { binary: isBinary }));
     }
   });
+
+
   [...wsServer.clients]
     .filter((o) => o.readyState === WebSocket.OPEN)
     .forEach((o) => o.send(JSON.stringify(userState)));
